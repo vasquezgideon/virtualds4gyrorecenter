@@ -28,21 +28,20 @@ class DS4_REPORT_EX(ctypes.Structure):
 
 
 def _load_vigem():
+    # When bundled by PyInstaller, files land in sys._MEIPASS
+    import sys
+    base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
     for p in [
-        r"C:\Program Files\ViGEmBus\ViGEmClient.dll",
-        r"C:\Program Files (x86)\ViGEmBus\ViGEmClient.dll",
-        "ViGEmClient.dll",
+        os.path.join(base, "Nefarius.ViGEm.Client.dll"),
+        r"C:\Program Files (x86)\ds4windows-3-3-3\DS4Windows\Nefarius.ViGEm.Client.dll",
+        "Nefarius.ViGEm.Client.dll",
     ]:
         if os.path.exists(p):
             try:
                 return ctypes.WinDLL(p)
             except Exception:
                 pass
-    try:
-        return ctypes.WinDLL("ViGEmClient")
-    except Exception:
-        return None
-
+    return None
 
 class ViGEmDS4:
     def __init__(self, lib):

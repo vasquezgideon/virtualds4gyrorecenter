@@ -10,7 +10,7 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install dependencies
-        run: pip install hid vgamepad pyinstaller
+        run: pip install hid vgamepad pyinstaller --prefer-binary
       - name: Build EXE
         run: pyinstaller --onefile --windowed --name GyroOffset gyro_offset.py
       - name: Upload EXE

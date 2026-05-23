@@ -1,6 +1,6 @@
 """
 Gyro Offset Middleware - DS4 motion correction via ViGEmBus ctypes
-pip install hid pyinstaller
+pip install hidapi pyinstaller
 System: ViGEmBus driver required
 """
 
@@ -15,7 +15,10 @@ from tkinter import messagebox
 try:
     import hid
 except ImportError:
-    hid = None
+    try:
+        import hidapi as hid
+    except ImportError:
+        hid = None
 
 
 # ── ViGEmBus ctypes ────────────────────────────────────────────────────────────
@@ -98,11 +101,11 @@ class ViGEmDS4:
 
 
 # DS4 HID IDs
-DS4_IDS = [(0x054C, 0x05C4), (0x054C, 0x09CC), (0x054C, 0x0CE6)]
+DS4_IDS   = [(0x054C, 0x05C4), (0x054C, 0x09CC), (0x054C, 0x0CE6)]
 GYRO_OFF  = 13
 ACCEL_OFF = 19
 
-# ── App ────────────────────────────────────────────────────────────────────────
+# ── Theme ──────────────────────────────────────────────────────────────────────
 
 BG     = "#0d0d0f"
 CARD   = "#16181c"
@@ -114,16 +117,6 @@ RED    = "#ff4757"
 FONT   = "Courier New"
 
 
-def label(parent, text, size=10, bold=False, fg=FG, bg=CARD, **kw):
-    f = (FONT, size, "bold") if bold else (FONT, size)
-    return tk.Label(parent, text=text, font=f, fg=fg, bg=bg, **kw)
-
-
-def varlabel(parent, var, size=10, fg=FG, bg=CARD, **kw):
-    f = (FONT, size)
-    return tk.Label(parent, textvariable=var, font=f, fg=fg, bg=bg, **kw)
-
-
 class App:
     def __init__(self, root):
         self.root = root
@@ -132,11 +125,11 @@ class App:
         self.root.resizable(False, False)
         self.root.configure(bg=BG)
 
-        self.running      = False
-        self.thread       = None
-        self.hid_dev      = None
-        self.vigem        = None
-        self._path        = None
+        self.running = False
+        self.thread  = None
+        self.hid_dev = None
+        self.vigem   = None
+        self._path   = None
         self.off_p = self.off_y = self.off_r = 0
 
         self.v_raw_p  = tk.StringVar(value="0")
@@ -152,15 +145,12 @@ class App:
         self._build()
         self._scan()
 
-    # ── UI ────────────────────────────────────────────────────────────────────
-
     def _card(self, pady_top=0):
         f = tk.Frame(self.root, bg=CARD, padx=16, pady=10)
         f.pack(fill="x", padx=20, pady=(pady_top, 6))
         return f
 
     def _build(self):
-        # Title
         tk.Label(self.root, text="GYRO OFFSET",
                  font=(FONT, 18, "bold"), bg=BG, fg=ACCENT).pack(pady=(16, 2))
         tk.Label(self.root, text="DS4 motion correction middleware",
@@ -168,36 +158,33 @@ class App:
 
         # Device
         d = self._card()
-        label(d, "DEVICE", 8, bold=True, fg=MUTED).pack(anchor="w")
+        tk.Label(d, text="DEVICE", font=(FONT, 8, "bold"), fg=MUTED, bg=CARD).pack(anchor="w")
         tk.Label(d, textvariable=self.v_device, font=(FONT, 10),
                  fg=FG, bg=CARD, wraplength=400, justify="left").pack(anchor="w")
 
         # Status
         s = self._card()
-        label(s, "STATUS", 8, bold=True, fg=MUTED).pack(anchor="w")
+        tk.Label(s, text="STATUS", font=(FONT, 8, "bold"), fg=MUTED, bg=CARD).pack(anchor="w")
         self.status_lbl = tk.Label(s, textvariable=self.v_status,
                                    font=(FONT, 11, "bold"), fg=MUTED, bg=CARD)
         self.status_lbl.pack(anchor="w")
 
-        # Values — use a grid inside one dedicated frame
+        # Values table — dedicated frame, grid only inside
         v = self._card()
-        label(v, "LIVE GYRO VALUES", 8, bold=True, fg=MUTED).pack(anchor="w", pady=(0, 6))
-
+        tk.Label(v, text="LIVE GYRO VALUES", font=(FONT, 8, "bold"),
+                 fg=MUTED, bg=CARD).pack(anchor="w", pady=(0, 6))
         tbl = tk.Frame(v, bg=CARD)
         tbl.pack(anchor="w")
 
-        # Header row
         for col, txt in enumerate(["AXIS", "RAW", "CORRECTED"]):
             tk.Label(tbl, text=txt, font=(FONT, 8, "bold"),
                      fg=MUTED, bg=CARD, width=13, anchor="w").grid(row=0, column=col, sticky="w")
 
-        # Data rows — all grid children of tbl
-        rows = [
+        for r, (name, rv, cv) in enumerate([
             ("PITCH", self.v_raw_p, self.v_cor_p),
             ("YAW",   self.v_raw_y, self.v_cor_y),
             ("ROLL",  self.v_raw_r, self.v_cor_r),
-        ]
-        for r, (name, rv, cv) in enumerate(rows, 1):
+        ], 1):
             tk.Label(tbl, text=name, font=(FONT, 10),
                      fg=FG, bg=CARD, width=13, anchor="w").grid(row=r, column=0, sticky="w", pady=2)
             tk.Label(tbl, textvariable=rv, font=(FONT, 10),
@@ -231,20 +218,18 @@ class App:
 
         # Warnings
         if hid is None:
-            self._warn("⚠  pip install hid  (hid missing)")
+            self._warn("⚠  hidapi missing — rebuild with: pip install hidapi pyinstaller")
         if self.vigem_lib is None:
-            self._warn("⚠  ViGEmBus driver not found — install from github.com/nefarius/ViGEmBus")
+            self._warn("⚠  ViGEmBus not found — github.com/nefarius/ViGEmBus/releases")
 
     def _warn(self, msg):
         f = tk.Frame(self.root, bg="#1a0f0f", padx=12, pady=6)
         f.pack(fill="x", padx=20, pady=(4, 0))
         tk.Label(f, text=msg, font=(FONT, 9), bg="#1a0f0f", fg=RED).pack(anchor="w")
 
-    # ── Logic ─────────────────────────────────────────────────────────────────
-
     def _scan(self):
         if hid is None:
-            self.v_device.set("hid not installed"); return
+            self.v_device.set("hidapi not installed"); return
         self._path = None
         for vid, pid in DS4_IDS:
             for dev in hid.enumerate(vid, pid):
@@ -267,7 +252,7 @@ class App:
 
     def _start(self):
         if hid is None:
-            messagebox.showerror("Missing", "pip install hid"); return
+            messagebox.showerror("Missing", "hidapi not installed — rebuild EXE"); return
         if self.vigem_lib is None:
             messagebox.showerror("Missing", "Install ViGEmBus driver.\ngithub.com/nefarius/ViGEmBus/releases"); return
         if self._path is None:
@@ -321,12 +306,12 @@ class App:
 
             cp, cy, cr = gx - self.off_p, gy - self.off_y, gz - self.off_r
 
-            self.root.after(0, self.v_raw_p.set,  str(gx))
-            self.root.after(0, self.v_raw_y.set,  str(gy))
-            self.root.after(0, self.v_raw_r.set,  str(gz))
-            self.root.after(0, self.v_cor_p.set,  str(cp))
-            self.root.after(0, self.v_cor_y.set,  str(cy))
-            self.root.after(0, self.v_cor_r.set,  str(cr))
+            self.root.after(0, self.v_raw_p.set, str(gx))
+            self.root.after(0, self.v_raw_y.set, str(gy))
+            self.root.after(0, self.v_raw_r.set, str(gz))
+            self.root.after(0, self.v_cor_p.set, str(cp))
+            self.root.after(0, self.v_cor_y.set, str(cy))
+            self.root.after(0, self.v_cor_r.set, str(cr))
 
             try:
                 lx  = data[1] - 128

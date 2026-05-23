@@ -12,7 +12,7 @@ jobs:
       - name: Install dependencies
         run: pip install hid pyinstaller
       - name: Build EXE
-        run: pyinstaller --onefile --windowed --name GyroOffset --hidden-import hid gyro_offset.py
+        run: pyinstaller --onefile --windowed --name GyroOffset --collect-all hid gyro_offset.py
       - name: Upload EXE
         uses: actions/upload-artifact@v4
         with:

@@ -10,9 +10,11 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install dependencies
-        run: pip install hidapi pyinstaller
+        run: |
+          pip install hidapi pyinstaller
+          curl -L -o ViGEmClient.dll https://github.com/nefarius/ViGEmClient/releases/download/v1.17.333.0/ViGEmClient.dll
       - name: Build EXE
-        run: pyinstaller --onefile --windowed --name GyroOffset --collect-all hid --collect-all hidapi --add-binary "Nefarius.ViGEm.Client.dll;." gyro_offset.py
+        run: pyinstaller --onefile --windowed --name GyroOffset --collect-all hid --collect-all hidapi --add-binary "ViGEmClient.dll;." gyro_offset.py
       - name: Upload EXE
         uses: actions/upload-artifact@v4
         with:

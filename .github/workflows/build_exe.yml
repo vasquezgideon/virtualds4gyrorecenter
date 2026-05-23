@@ -10,9 +10,9 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install dependencies
-        run: pip install hid pyinstaller
+        run: pip install hidapi pyinstaller
       - name: Build EXE
-        run: pyinstaller --onefile --windowed --name GyroOffset --collect-all hid gyro_offset.py
+        run: pyinstaller --onefile --windowed --name GyroOffset --collect-all hid --collect-all hidapi gyro_offset.py
       - name: Upload EXE
         uses: actions/upload-artifact@v4
         with:

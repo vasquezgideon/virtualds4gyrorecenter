@@ -28,13 +28,12 @@ class DS4_REPORT_EX(ctypes.Structure):
 
 
 def _load_vigem():
-    # When bundled by PyInstaller, files land in sys._MEIPASS
     import sys
     base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
     for p in [
-        os.path.join(base, "Nefarius.ViGEm.Client.dll"),
-        r"C:\Program Files (x86)\ds4windows-3-3-3\DS4Windows\Nefarius.ViGEm.Client.dll",
-        "Nefarius.ViGEm.Client.dll",
+        os.path.join(base, "ViGEmClient.dll"),
+        r"C:\Windows\System32\ViGEmClient.dll",
+        "ViGEmClient.dll",
     ]:
         if os.path.exists(p):
             try:

@@ -14,20 +14,13 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Upgrade tools
-        run: |
-          python -m pip install --upgrade pip setuptools wheel
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip setuptools wheel
 
-      - name: Install dependencies (SAFE vgamepad install)
+      - name: Install dependencies
         run: |
           pip install pyinstaller
           pip install hidapi
-          pip install vgamepad --only-binary=:all:
-
-      - name: Verify imports
-        run: |
-          python -c "import hid; print('hid OK')"
-          python -c "import vgamepad; print('vgamepad OK')"
 
       - name: Build EXE
         run: |
@@ -37,7 +30,6 @@ jobs:
             --name GyroOffset ^
             --collect-all hid ^
             --collect-all hidapi ^
-            --collect-all vgamepad ^
             gyro_offset.py
 
       - name: Upload EXE
